@@ -1,0 +1,99 @@
+import logo from './logo.svg';
+import Caver from 'caver-js';
+import './App.css';
+
+// 1. Smart Contract 배포 주소 파악(가져오기)
+// 2. caver.js 이용해서 스마트 컨트랙트 연동하기
+// 3. 가져온 스마트 컨트랙트 실행 결과 웹에 표현하기
+
+// KAS 정보
+const ACCESS_KEY = "KASKBUBMKYQ8HNMWUC2L7UJO";
+const SECRET_KEY = "nXknVrHykHmSd1mhAYUUtK+yj36qIilBowsL5ekd";
+const CHAIN_ID = "1001"; // bobbab:1001 / mainnet:8217
+
+// Smart Contract 정보
+const BORI_CONTRACT_ADDRESS = "0x55AF1B0839B8271730F0d29E1793E9AedF8A55B4";
+const BORI_CONTRACT_ABI = '[ { "constant": false, "inputs": [ { "name": "supporter", "type": "address" }, { "name": "receiver", "type": "address" }, { "name": "tokenId", "type": "uint256" }, { "name": "tokenURI", "type": "string" }, { "name": "_data", "type": "bytes" } ], "name": "support", "outputs": [ { "name": "", "type": "bool" } ], "payable": true, "stateMutability": "payable", "type": "function" }, { "constant": true, "inputs": [ { "name": "supporter", "type": "address" } ], "name": "getSupportMyTokens", "outputs": [ { "components": [ { "name": "suppoterAddress", "type": "address" }, { "name": "receiverAddress", "type": "address" }, { "name": "tokenId", "type": "uint256" }, { "name": "amount", "type": "uint256" } ], "name": "", "type": "tuple[]" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "address" }, { "name": "", "type": "uint256" } ], "name": "mySupportTokens", "outputs": [ { "name": "suppoterAddress", "type": "address" }, { "name": "receiverAddress", "type": "address" }, { "name": "tokenId", "type": "uint256" }, { "name": "amount", "type": "uint256" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "name", "outputs": [ { "name": "", "type": "string" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "seller", "outputs": [ { "name": "", "type": "address" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "symbol", "outputs": [ { "name": "", "type": "string" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "tokenOwner", "outputs": [ { "name": "", "type": "address" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [ { "name": "", "type": "uint256" } ], "name": "tokenURIs", "outputs": [ { "name": "", "type": "string" } ], "payable": false, "stateMutability": "view", "type": "function" } ]';
+
+const COUNT_CONTRACT_ADDRESS = "0xE4E68f9688FF56eDE27accD9CbD6F807bF4942d7";
+const COUNT_CONTRACT_ABI = '[ { "constant": true, "inputs": [], "name": "count", "outputs": [ { "name": "", "type": "uint256" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "getBlockNumber", "outputs": [ { "name": "", "type": "uint256" } ], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [ { "name": "_count", "type": "uint256" } ], "name": "setCount", "outputs": [], "payable": false, "stateMutability": "nonpayable", "type": "function" } ]';
+
+const option = {
+  headers: [
+    {
+      name: "Authorization",
+      value: "Basic S0FTS0JVQk1LWVE4SE5NV1VDMkw3VUpPOm5Ya25Wckh5a0htU2QxbWhBWVVVdEsreWozNnFJaWxCb3dzTDVla2Q="
+      // value: "Basic " + Buffer.from(ACCESS_KEY + ":" + SECRET_KEY).toString("base64")
+    },
+    {
+      name: "x-chain-id",
+      value: CHAIN_ID
+    }
+  ]
+}
+
+const caver = new Caver(new Caver.providers.HttpProvider("https://node-api.klaytnapi.com/v1/klaytn", option));
+const BoriContract = new caver.contract(JSON.parse(BORI_CONTRACT_ABI), BORI_CONTRACT_ADDRESS);
+const CountContract = new caver.contract(JSON.parse(COUNT_CONTRACT_ABI), COUNT_CONTRACT_ADDRESS);
+
+const readCountContract = async () => {
+  // 스마트 컨트랙트 함수 호출
+  const _count = await CountContract.methods.count().call();
+  console.log(_count);
+}
+
+const getBalance = (address) => {
+  return caver.rpc.klay.getBalance(address).then((response) => {
+    const balance = caver.utils.convertFromPeb(caver.utils.hexToNumberString(response));
+    console.log('BALANCE', balance);
+    return balance;
+  })
+}
+
+const setCount = async (newCount) => {
+  // 사용할 account 설정
+  try {
+    const privatekey = "0xc89e16e0c336f142db7a21e3693ed734e3db24b784c1bc52a90f0843ee7e558d";
+    const deployer = caver.wallet.keyring.createFromPrivateKey(privatekey);
+    caver.wallet.add(deployer);
+    // 스마트 컨트랙트 실행 트랜잭션 날리기
+    // 결과 확인
+
+    const receipt = await CountContract.methods.setCount(newCount).send({
+      from: deployer.address, //address
+      gas: "0x4bfd200"
+    })
+
+    console.log(receipt);
+  } catch(e) {
+    console.log('error');
+  }
+}
+
+function App() {
+  //readCountContract();
+  //getBalance('0x11e9fb7214f22bf1aab84688db89c94dec244757');
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <input type="text" />
+        <button title={'카운트변경'} onClick={()=>{setCount(100)}}/>
+        <p>
+          Good <code>src/App.js</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
