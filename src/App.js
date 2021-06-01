@@ -14,9 +14,7 @@ const onPressBalance = async (_setBalance) => {
 }
 
 const onPressSupport = async (type, _setSupport, _setReceiver) => {
-  let _support = await sendSupport(type);
-  console.log(1, _support);
-
+  let _support = await sendSupport(type); 
   if (_support == null) return false;
 
   let _balance = await getBalance(_support[0]);

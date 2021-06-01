@@ -34,7 +34,7 @@ const option = {
         ['0x6b66afdbb4846b23da8ffeb74f89197accd0c462', '세계보건기구']  // 가칭) 세계보건기구
     ];
 
-    let tokenId = '100';
+    let tokenId = new Date().getTime();
     let tokenURI = 'supporting';
 
     try {
@@ -45,9 +45,6 @@ const option = {
             value: 10**16,
             gas: "0x4bfd200"
         })
-
-        console.log('support', _support);
-
         return receiver[type];
 
     } catch(e) {
